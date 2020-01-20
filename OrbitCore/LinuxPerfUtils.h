@@ -66,7 +66,7 @@ namespace LinuxPerfUtils
 
     inline void stop_capturing(uint32_t a_FileDescriptor)
     {
-        ioctl(a_FileDescriptor, PERF_EVENT_IOC_DISABLE, 0);
+        ioctl(a_FileDescriptor, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
     }
 
     perf_event_attr generic_perf_event_attr();
