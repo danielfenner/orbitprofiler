@@ -11,7 +11,6 @@ sudo apt-get install -y g++-7
 
 # Build vcpkg
 cd external/vcpkg
-.\vcpkg update
 
 if [ -f "vcpkg" ]
 then
@@ -24,16 +23,16 @@ else
 fi
 
 ## Override freetype-gl portfile for linux (.lib->.a)
-#cd ../..
-#cp "OrbitUtils/freetype-gl-portfile.cmake" "external/vcpkg/ports/freetype-gl/portfile.cmake"
-#cd external/vcpkg
+cd ../..
+cp "OrbitUtils/freetype-gl-portfile.cmake" "external/vcpkg/ports/freetype-gl/portfile.cmake"
+cd external/vcpkg
 
 ## Build dependencies
 set VCPKG_DEFAULT_TRIPLET=x64-linux
 ./vcpkg install freetype-gl breakpad capstone asio cereal imgui glew
 
 #remove compiled libfreetype.a TODO: fix in cmakelists.txt
-#rm "installed/x64-linux/lib/libfreetype.a"
+rm "installed/x64-linux/lib/libfreetype.a"
 
 # CMake
 cd ../..
