@@ -8,7 +8,7 @@ if defined QTDIR (
     echo QTDIR environment variable not found.
     echo Please set your QTDIR environment variable to point to your Qt installation directory [ex. C:\Qt\5.12.1\msvc2017_64]
     echo ======= ERROR =======
-    goto :eof
+    exit 1
 )
 
 :: Build vcpkg
@@ -46,13 +46,20 @@ cd build
 mkdir x86
 cd x86
 cmake -DCMAKE_TOOLCHAIN_FILE='../../external/vcpkg/scripts/buildsystems/vcpkg.cmake' ../..
+if ERRORLEVEL 1 ( exit %ERRORLEVEL% )
+
 cmake --build . --target ALL_BUILD --config Release
+if ERRORLEVEL 1 ( exit %ERRORLEVEL% )
 cd ..
 
 mkdir x64
 cd x64
 cmake -DCMAKE_TOOLCHAIN_FILE='../../external/vcpkg/scripts/buildsystems/vcpkg.cmake' -DCMAKE_GENERATOR_PLATFORM=x64 ../..
+if ERRORLEVEL 1 ( exit %ERRORLEVEL% )
+
 cmake --build . --target ALL_BUILD --config Release
-cd ../..
-start build/x64/OrbitQt/Release/Orbit.exe
+if ERRORLEVEL 1 ( exit %ERRORLEVEL% )
+
+::cd ../..
+::start build/x64/OrbitQt/Release/Orbit.exe
 
