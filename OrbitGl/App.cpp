@@ -554,6 +554,7 @@ void OrbitApp::LoadPreset(const std::shared_ptr<PresetFile>& preset) {
   if (selected_process != nullptr && selected_process->full_path() == process_full_path) {
     // In case we already have the correct process selected
     GOrbitApp->LoadModulesFromPreset(GetSelectedProcess(), preset);
+    GOrbitApp->FireRefreshCallbacks();
     return;
   }
   if (!SelectProcess(Path::GetFileName(process_full_path), preset)) {
@@ -932,7 +933,7 @@ void OrbitApp::UpdateProcessAndModuleList(
       // To this point all data is ready. We can set the Process and then
       // propagate the changes to the UI.
 
-      if (pid != GetSelectedProcessId()) {
+      if (!preset && pid != GetSelectedProcessId()) {
         data_manager_->ClearSelectedFunctions();
         data_manager_->set_selected_process(process);
       }
