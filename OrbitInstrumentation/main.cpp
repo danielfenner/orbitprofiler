@@ -2,17 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <errno.h>
+#include <sys/ptrace.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include <chrono>
 #include <memory>
 #include <set>
 #include <string>
 #include <thread>
 #include <vector>
-
-#include <errno.h>
-#include <sys/ptrace.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 
 #include "OrbitBase/Logging.h"
 #include "OrbitBase/Result.h"
@@ -23,7 +23,6 @@
 #include "absl/flags/usage_config.h"
 #include "absl/strings/str_format.h"
 
-
 ABSL_FLAG(uint32_t, pid, 0, "PID of the process to instrument.");
 
 namespace {
@@ -31,17 +30,15 @@ namespace {
 using LinuxTracing::GetTidsOfProcess;
 
 // todo: get rid of GetTidsOfProcessAsSet it is not really needed.
-std::set<pid_t> GetTidsOfProcessAsSet(pid_t pid){
+std::set<pid_t> GetTidsOfProcessAsSet(pid_t pid) {
   auto tids = GetTidsOfProcess(pid);
-  return std::set<pid_t> (tids.begin(),tids.end());
+  return std::set<pid_t>(tids.begin(), tids.end());
 }
 
-}  //namespace
+}  // namespace
 
 // Tracee needs to be stoped before calling this.
-void DetachAndContinueThread(pid_t tid) {
-  ptrace(PTRACE_DETACH, tid, nullptr, 0);
-}
+void DetachAndContinueThread(pid_t tid) { ptrace(PTRACE_DETACH, tid, nullptr, 0); }
 
 void DetachAndContinueProcess(pid_t pid) {
   auto process_tids = GetTidsOfProcess(pid);
@@ -51,10 +48,11 @@ void DetachAndContinueProcess(pid_t pid) {
 }
 
 [[nodiscard]] ErrorMessageOr<void> AttachAndStopThread(pid_t tid) {
-  LOG("Attach to thread : %i", tid);   
+  LOG("Attach to thread : %i", tid);
 
   if (ptrace(PTRACE_ATTACH, tid, 0, 0) < 0) {
-    return ErrorMessage(absl::StrFormat("Can not attach to tid \"%d\": \"%s\"", tid, strerror(errno)));
+    return ErrorMessage(
+        absl::StrFormat("Can not attach to tid \"%d\": \"%s\"", tid, strerror(errno)));
   }
 
   // Wait for the traced thread to stop. Timeout after one second.
@@ -65,7 +63,7 @@ void DetachAndContinueProcess(pid_t pid) {
       break;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    if (--timeout == 0) { 
+    if (--timeout == 0) {
       DetachAndContinueThread(tid);
       return ErrorMessage("Waiting for the traced thread to stop timed out.");
     }
@@ -115,8 +113,8 @@ int main(int argc, char** argv) {
   auto result = AttachAndStopProcess(pid);
   if (result.has_error()) {
     FATAL("%s", result.error().message());
-  }    
-  
+  }
+
   std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
   DetachAndContinueProcess(pid);
