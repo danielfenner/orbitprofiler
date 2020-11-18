@@ -13,12 +13,14 @@ target_compile_options(OrbitLinuxTracing PRIVATE ${STRICT_COMPILE_FLAGS})
 target_compile_features(OrbitLinuxTracing PUBLIC cxx_std_17)
 
 target_include_directories(OrbitLinuxTracing PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include)
+        ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/include/OrbitLinuxTracing)
 
 target_include_directories(OrbitLinuxTracing PRIVATE
         ${CMAKE_CURRENT_LIST_DIR})
 
 target_sources(OrbitLinuxTracing PUBLIC
+        include/OrbitLinuxTracing/LinuxTracingUtils.h
         include/OrbitLinuxTracing/OrbitTracing.h
         include/OrbitLinuxTracing/Tracer.h
         include/OrbitLinuxTracing/TracerListener.h)
@@ -32,7 +34,6 @@ target_sources(OrbitLinuxTracing PRIVATE
         KernelTracepoints.h
         LibunwindstackUnwinder.cpp
         LibunwindstackUnwinder.h
-        LinuxTracingUtils.h
         LinuxTracingUtils.cpp
         ManualInstrumentationConfig.h
         PerfEvent.cpp
