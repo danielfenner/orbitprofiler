@@ -16,5 +16,6 @@ target_sources(OrbitInstrumentation PRIVATE
         main.cpp)
 
 target_link_libraries(OrbitInstrumentation PUBLIC 
-        OrbitBase)
+        OrbitBase
+        OrbitLinuxTracing)
 
