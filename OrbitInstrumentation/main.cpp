@@ -25,25 +25,12 @@
 
 ABSL_FLAG(uint32_t, pid, 0, "PID of the process to instrument.");
 
-namespace {
-
 using LinuxTracing::GetTidsOfProcess;
-
-// todo: get rid of GetTidsOfProcessAsSet it is not really needed.
-std::set<pid_t> GetTidsOfProcessAsSet(pid_t pid) {
-  auto tids = GetTidsOfProcess(pid);
-  return std::set<pid_t>(tids.begin(), tids.end());
-}
-
-}  // namespace
-
-// Tracee needs to be stoped before calling this.
-void DetachAndContinueThread(pid_t tid) { ptrace(PTRACE_DETACH, tid, nullptr, 0); }
 
 void DetachAndContinueProcess(pid_t pid) {
   auto process_tids = GetTidsOfProcess(pid);
   for (auto tid : process_tids) {
-    DetachAndContinueThread(tid);
+    ptrace(PTRACE_DETACH, tid, nullptr, 0);
   }
 }
 
@@ -64,7 +51,7 @@ void DetachAndContinueProcess(pid_t pid) {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     if (--timeout == 0) {
-      DetachAndContinueThread(tid);
+      ptrace(PTRACE_DETACH, tid, nullptr, 0);
       return ErrorMessage("Waiting for the traced thread to stop timed out.");
     }
   }
@@ -72,10 +59,10 @@ void DetachAndContinueProcess(pid_t pid) {
 }
 
 [[nodiscard]] ErrorMessageOr<void> AttachAndStopProcess(pid_t pid) {
-  bool goon = true;
+  bool all_threads_halted = false;
   auto process_tids = GetTidsOfProcess(pid);
   std::set<pid_t> halted_tids;
-  while (goon) {
+  while (!all_threads_halted) {
     // Note that the process is still running - it can spawn and end threads at this point.
     for (auto tid : process_tids) {
       if (halted_tids.count(tid) == 1) {
@@ -83,10 +70,13 @@ void DetachAndContinueProcess(pid_t pid) {
       }
       auto result = AttachAndStopThread(tid);
       if (result.has_error()) {
-        // If the tid does not exist anymore this is fine; it was just ended before we could
+        // If the tid does not exist anymore this is fine; the thread was just ended before we could
         // stop it. Otherwise we return the error.
-        if (GetTidsOfProcessAsSet(pid).count(tid) != 0) {
-          return result.error();
+        const auto tids_now = GetTidsOfProcess(pid);
+        for (const auto& t : tids_now) {
+          if (t == tid) {
+            return result.error();
+          }
         }
       } else {
         halted_tids.insert(tid);
@@ -95,7 +85,7 @@ void DetachAndContinueProcess(pid_t pid) {
     // Check if there were new tids; if so run another round and stop them.
     process_tids = GetTidsOfProcess(pid);
     if (process_tids.size() == halted_tids.size()) {
-      goon = false;
+      all_threads_halted = true;
     }
   }
   return outcome::success();
